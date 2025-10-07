@@ -264,7 +264,7 @@ void FOnlineUserCloudEOS::EnumerateUserFiles(const FUniqueNetId& UserId)
 		}
 		else
 		{
-			UE_LOG_ONLINE_CLOUD(Warning, TEXT("[FOnlineUserCloudEOS::EnumerateUserFiles] UniqueNetId not found for EOS_ProductUserId"));
+			UE_LOG_ONLINE_CLOUD(Warning, TEXT("[FOnlineUserCloudEOS::EnumerateUserFiles] UniqueNetId not found for EOS_ProductUserId %s"), Data->LocalUserId);
 		}
 
 		TriggerOnEnumerateUserFilesCompleteDelegates(bWasSuccessful, *UniqueNetIdPtr);

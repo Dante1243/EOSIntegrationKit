@@ -16,7 +16,6 @@ class SOCKETSUBSYSTEMEIK_API UNetDriverEIKBase
 	GENERATED_BODY()
 
 public:
-	UNetDriverEIKBase(const FObjectInitializer& ObjectInitializer);
 //~ Begin UNetDriver Interface
 	virtual bool IsAvailable() const override;
 	virtual bool InitBase(bool bInitAsClient, FNetworkNotify* InNotify, const FURL& URL, bool bReuseAddressAndPort, FString& Error) override;
@@ -32,11 +31,8 @@ public:
 
 public:
 	UPROPERTY()
-	bool bIsPassthrough = false;
+	bool bIsPassthrough;
 
-#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 6
-	UE_DEPRECATED(5.6, "bIsUsingP2PSockets is deprecated. All code that used it now operates as if it were true")
-#endif
 	UPROPERTY(Config)
-	bool bIsUsingP2PSockets = true;
+	bool bIsUsingP2PSockets;
 };

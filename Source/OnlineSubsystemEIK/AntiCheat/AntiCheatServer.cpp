@@ -48,7 +48,7 @@ bool UAntiCheatServer::RegisterAntiCheatServer(FString ServerName, FString Clien
 			{
 				EOS_AntiCheatServer_BeginSessionOptions Options = {};
 				Options.ApiVersion = EOS_ANTICHEATSERVER_BEGINSESSION_API_LATEST;
-				Options.RegisterTimeoutSeconds = EOS_ANTICHEATSERVER_BEGINSESSION_MAX_REGISTERTIMEOUT;
+				Options.RegisterTimeoutSeconds = 60;
 				Options.ServerName = TCHAR_TO_UTF8(*ServerName);
 				Options.bEnableGameplayData = EOS_FALSE;
 #if UE_SERVER
@@ -154,7 +154,7 @@ bool UAntiCheatServer::UnregisterClientFromAntiCheat(APlayerController* Controll
 			}
 			{
 				EOS_AntiCheatServer_UnregisterClientOptions Options = {};
-				Options.ApiVersion = EOS_ANTICHEATSERVER_ENDSESSION_API_LATEST;
+				Options.ApiVersion = EOS_ANTICHEATSERVER_UNREGISTERCLIENT_API_LATEST;
 				Options.ClientHandle = ControllerRef;
 				const EOS_EResult Result = EOS_AntiCheatServer_UnregisterClient(EOSRef->AntiCheatServerHandle, &Options);
 				if (Result == EOS_EResult::EOS_Success)
@@ -192,10 +192,10 @@ bool UAntiCheatServer::RecievedMessageFromClient(APlayerController* Controller,c
 			const EOS_EResult Result = EOS_AntiCheatServer_ReceiveMessageFromClient(EOSRef->AntiCheatServerHandle, &Options);
 			if(Result == EOS_EResult::EOS_Success)
 			{
-				UE_LOG(LogEIK, Log, TEXT("RecievedMessageFromClient-> Success"));
+				UE_LOG(LogEIK, Verbose, TEXT("RecievedMessageFromClient-> Success"));
 				return true;
 			}
-			UE_LOG(LogEIK, Log, TEXT("RecievedMessageFromClient-> %hs"), EOS_EResult_ToString(Result));
+			UE_LOG(LogEIK, Warning, TEXT("RecievedMessageFromClient-> %hs"), EOS_EResult_ToString(Result));
 			return false;
 		}
 		UE_LOG(LogEIK, Warning, TEXT("RecievedMessageFromClient-> FOnlineSubsystemEOS is null"));

@@ -24,6 +24,8 @@ class ONLINESUBSYSTEMEIK_API UAntiCheatClient : public UGameInstanceSubsystem
 
 public:
 
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override { return false; }
+
 	UFUNCTION(BlueprintPure, Category = "EOS Integration Kit|AntiCheat", meta = (WorldContext = "WorldContextObject"))
 	static bool IsAntiCheatClientAvailable(const UObject* WorldContextObject);
 
@@ -39,7 +41,7 @@ public:
 	static void EOS_CALL OnMessageToServerCallback(const EOS_AntiCheatClient_OnMessageToServerCallbackInfo* Data);
 
 	UPROPERTY(BlueprintAssignable, Category = "EOS Integration Kit|AntiCheat")
-	FSendMessageToServer OnSendMessageToServer;
+	FSendMessageToServer OnSendMessageToServer;;
 
 	void PrintAdvancedLogs(const FString& Log) const
 	{

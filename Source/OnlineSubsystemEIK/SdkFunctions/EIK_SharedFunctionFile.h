@@ -3576,7 +3576,7 @@ enum EEIK_ERTCDataStatus
 	EIK_RTCDS_Disabled = 2 UMETA(DisplayName = "Disabled"),
 };
 
-DECLARE_LOG_CATEGORY_EXTERN(LogEIK, Verbose, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogEIK, Log, All);
 UCLASS()
 class ONLINESUBSYSTEMEIK_API UEIK_SharedFunctionFile : public UObject
 {

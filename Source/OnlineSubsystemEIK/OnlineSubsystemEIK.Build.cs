@@ -13,11 +13,17 @@ public class OnlineSubsystemEIK : ModuleRules
 	{
 		PrivateDefinitions.Add("ONLINESUBSYSTEMEOS_PACKAGE=1");
 		
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		PrivatePCHHeaderFile = "AntiCheat/AntiCheatClient.h";
+		
+		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/EIKSDK/Include"));
+		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "../EOSIntegrationKit/Public"));
 
 		PublicDependencyModuleNames.AddRange(
 			new string[] {
-				"OnlineSubsystemUtils"
+				"OnlineSubsystemUtils",
+				"EOSIntegrationKit",
+				"EIKShared",
+				"VoiceChat"
 			}
 		);
 
@@ -27,20 +33,17 @@ public class OnlineSubsystemEIK : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"EIKSDK",
-				"EIKShared",
 				"EIKVoiceChat",
 				"Json",
 				"OnlineSubsystem",
 				"Sockets",
-				"VoiceChat",
 				"NetCore", 
 				"SocketSubsystemEIK",
 				"InputCore",
 				"Projects",
 				"Slate",
 				"SlateCore",
-				"HTTP", 
-				"EOSIntegrationKit",
+				"HTTP"
 			}
 		);
 		#if UE_5_0_OR_LATER

@@ -46,6 +46,7 @@ void UEIK_LoginwithAuth_AsyncFunction::Activate()
 void UEIK_LoginwithAuth_AsyncFunction::LoginCallback(int32 LocalUserNum, bool bWasSuccess, const FUniqueNetId& UserId,
 	const FString& Error)
 {
+	AddToRoot();
 	if(bWasSuccess)
 	{
 		if(UserId.IsValid())
@@ -74,6 +75,7 @@ void UEIK_LoginwithAuth_AsyncFunction::LoginCallback(int32 LocalUserNum, bool bW
 		UE_LOG(LogEIK, Error, TEXT("LoginUsingAuthInterface: Login failed. Error: %s"), *Error);
 		OnFailure.Broadcast(FEIK_EpicAccountId(), FEIK_ProductUserId(), Error);
 	}
+	RemoveFromRoot();
 	SetReadyToDestroy();
 #if ENGINE_MAJOR_VERSION == 5
 	MarkAsGarbage();

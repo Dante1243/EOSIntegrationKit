@@ -659,12 +659,6 @@ void FEOSVoiceChatUser::LeaveChannel(const FString& ChannelName, const FOnVoiceC
 	LeaveChannelInternal(ChannelName, Delegate);
 }
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6
-void FEOSVoiceChatUser::Set3DPosition(const FString& ChannelName, const FVector& Position)
-{
-	// Unimplemented - following UE 5.6 engine pattern
-}
-#else
 void FEOSVoiceChatUser::Set3DPosition(const FString& ChannelName, const FVector& SpeakerPosition, const FVector& ListenerPosition, const FVector& ListenerForwardDirection, const FVector& ListenerUpDirection)
 {
 #if EOS_VOICE_TODO
@@ -682,7 +676,6 @@ void FEOSVoiceChatUser::Set3DPosition(const FString& ChannelName, const FVector&
 	}
 #endif
 }
-#endif
 
 TArray<FString> FEOSVoiceChatUser::GetChannels() const
 {
@@ -891,31 +884,6 @@ void FEOSVoiceChatUser::StopRecording(FDelegateHandle Handle)
 #endif
 }
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6
-FDelegateHandle FEOSVoiceChatUser::RegisterOnVoiceChatAfterCaptureAudioReadDelegate(const FOnVoiceChatAfterCaptureAudioReadDelegate2::FDelegate& Delegate)
-{
-	FScopeLock Lock(&BeforeCaptureAudioSentLock);
-
-	return OnVoiceChatAfterCaptureAudioReadDelegate.Add(Delegate);
-}
-
-void FEOSVoiceChatUser::UnregisterOnVoiceChatAfterCaptureAudioReadDelegate(FDelegateHandle Handle)
-{
-	FScopeLock Lock(&BeforeCaptureAudioSentLock);
-
-	OnVoiceChatAfterCaptureAudioReadDelegate.Remove(Handle);
-}
-
-FDelegateHandle FEOSVoiceChatUser::RegisterOnVoiceChatBeforeCaptureAudioSentDelegate(const FOnVoiceChatBeforeCaptureAudioSentDelegate2::FDelegate& Delegate)
-{
-	FScopeLock Lock(&BeforeCaptureAudioSentLock);
-
-	return OnVoiceChatBeforeCaptureAudioSentDelegate.Add(Delegate);
-}
-
-void FEOSVoiceChatUser::UnregisterOnVoiceChatBeforeCaptureAudioSentDelegate(FDelegateHandle Handle)
-{
-#else
 FDelegateHandle FEOSVoiceChatUser::RegisterOnVoiceChatAfterCaptureAudioReadDelegate(const FOnVoiceChatAfterCaptureAudioReadDelegate::FDelegate& Delegate)
 {
 	FScopeLock Lock(&BeforeCaptureAudioSentLock);
@@ -939,7 +907,6 @@ FDelegateHandle FEOSVoiceChatUser::RegisterOnVoiceChatBeforeCaptureAudioSentDele
 
 void FEOSVoiceChatUser::UnregisterOnVoiceChatBeforeCaptureAudioSentDelegate(FDelegateHandle Handle)
 {
-#endif
 	FScopeLock Lock(&BeforeCaptureAudioSentLock);
 
 	OnVoiceChatBeforeCaptureAudioSentDelegate.Remove(Handle);
@@ -2396,7 +2363,6 @@ void FEOSVoiceChatUser::OnChannelAudioBeforeSend(const EOS_RTCAudio_AudioBeforeS
 
 			// TODO EOS doesn't tell us if it's silence or not, maybe need to compare all the samples to some threshold?
 			const bool bSpeaking = true;
-			const FString ChannelName = UTF8_TO_TCHAR(CallbackInfo->RoomName);
 
 			if (bFakeAudioInput)
 			{
@@ -2415,13 +2381,9 @@ void FEOSVoiceChatUser::OnChannelAudioBeforeSend(const EOS_RTCAudio_AudioBeforeS
 			FScopeLock Lock(&BeforeCaptureAudioSentLock);
 
 			// Allow any processes to modify audio through DSP effects processing
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6
-			OnVoiceChatAfterCaptureAudioReadDelegate.Broadcast(ChannelName, WriteableSamples, Buffer->SampleRate, Buffer->Channels);
-			OnVoiceChatBeforeCaptureAudioSentDelegate.Broadcast(ChannelName, Samples, Buffer->SampleRate, Buffer->Channels, bSpeaking);
-#else
 			OnVoiceChatAfterCaptureAudioReadDelegate.Broadcast(WriteableSamples, Buffer->SampleRate, Buffer->Channels);
+
 			OnVoiceChatBeforeCaptureAudioSentDelegate.Broadcast(Samples, Buffer->SampleRate, Buffer->Channels, bSpeaking);
-#endif
 		}
 		else
 		{
@@ -2507,31 +2469,30 @@ void FEOSVoiceChatUser::OnChannelAudioBeforeRender(const EOS_RTCAudio_AudioBefor
 						SpeakerActor->GetComponents<UEIKVoiceChatSynthComponent>(VoiceChatSynthComponents);
 						if(VoiceChatSynthComponents.Num() > 0)
 						{
-							bool bFoundValidVoiceChatSynthComponent = false;
 							for(auto VoiceChatSynthComponent : VoiceChatSynthComponents)
 							{
-								if (IsValid(VoiceChatSynthComponent))
+								if (IsValid(VoiceChatSynthComponent) && (VoiceChatSynthComponent->SupportedRooms.Contains(ChannelName) || VoiceChatSynthComponent->bUseGlobalRoom))
 								{
-									if(VoiceChatSynthComponent->SupportedRooms.Contains(ChannelName) || VoiceChatSynthComponent->bUseGlobalRoom)
+									if (VoiceChatSynthComponent->IsActive())
 									{
-										if (VoiceChatSynthComponent->IsActive())
-										{
-											VoiceChatSynthComponent->WriteSamples(Samples);
-											bFoundValidVoiceChatSynthComponent = true;
-										}
+										VoiceChatSynthComponent->WriteSamples(Samples);
+										//if we're here, it means that we passed audio to all valid components, so we need to clear the buffer so that it isn't played by the RTC.
+										FMemory::Memset(Samples.GetData(), 0, Samples.Num() * sizeof(int16));
+									}
+									else
+									{
+										UE_LOG(LogTemp,Warning,TEXT("VoiceChatSynthComponent is not active"));
 									}
 								}
+								else
+								{
+									UE_LOG(LogTemp,Warning,TEXT("VoiceChatSynthComponent is not valid"));
+								}
 							}
-							if (!bFoundValidVoiceChatSynthComponent)
-							{
-								UE_LOG(LogEOSVoiceChat,Warning,TEXT("no valid or active VoiceChatSynthComponent found"));
-							}
-							//if we're here, it means that we passed audio to all valid components, so we need to clear the buffer so that it isn't played by the RTC.
-							FMemory::Memset(Samples.GetData(), 0, Samples.Num() * sizeof(int16));
 						}
 						else
 						{
-							UE_LOG(LogEOSVoiceChat,Warning,TEXT("no VoiceChatSynthComponent found"));
+							UE_LOG(LogTemp,Warning,TEXT("VoiceChatSynthComponent is not found"));
 						}
 					}
 				}
@@ -2547,7 +2508,7 @@ void FEOSVoiceChatUser::OnChannelAudioBeforeRender(const EOS_RTCAudio_AudioBefor
 		}
 		else
 		{
-			UE_LOG(LogEOSVoiceChat,Warning,TEXT("GEngine is not found"));
+			UE_LOG(LogTemp,Warning,TEXT("GEngine is not found"));
 		}
 	}
 }

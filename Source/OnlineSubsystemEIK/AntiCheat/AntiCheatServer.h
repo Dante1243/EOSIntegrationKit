@@ -52,6 +52,8 @@ class ONLINESUBSYSTEMEIK_API UAntiCheatServer : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
+	
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override { return false; }
 
 	UFUNCTION(BlueprintPure, Category = "EOS Integration Kit|AntiCheat", meta = (WorldContext = "WorldContextObject"))
 	static bool IsAntiCheatServerAvailable(const UObject* WorldContextObject);
