@@ -65,6 +65,8 @@ bool APingClient::ConnectToHost(FString Address, int32 Port, const bool bPortOve
 		}
 		else
 		{
+			ensure(false);
+			UE_LOG(LogPingClient, Warning, TEXT("Failed to get ListenPort from config, defaulting to 8888"));
 			url.Port = 8888;
 		}
 	}
